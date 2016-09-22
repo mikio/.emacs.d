@@ -1,0 +1,17 @@
+.cask/*
+auto-save-list/*
+elpa/*
+eshell/*
+semanticdb/*
+abbrev_defs
+ac-comphist.dat
+cider-repl-history
+history
+tramp
+bookmarks
+*.elc
+bookmarks
+custom.el
+url/*
+image-dired/*
+recentf
