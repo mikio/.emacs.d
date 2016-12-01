@@ -80,14 +80,15 @@
     hydra
     ;;tabbar
     simple-screen
-    e2wm
-    helm
-    helm-c-moccur
-    helm-c-yasnippet
-    helm-git
-    helm-gtags
-    helm-ag
-    helm-open-github
+    ;; e2wm
+    anything
+    ;; helm
+    ;; helm-c-moccur
+    ;; helm-c-yasnippet
+    ;; helm-git
+    ;; helm-gtags
+    ;; helm-ag
+    ;; helm-open-github
     twittering-mode
     org
     magit
@@ -732,6 +733,24 @@ properly disable mozc-mode."
 
     )
   )
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; #anything
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun my-anything ()
+    (use-package anything-config
+      :config
+      (global-set-key (kbd "M-x") 'anything-M-x)
+      (global-set-key (kbd "C-x b") 'anything-buffers-list)
+      (global-set-key (kbd "C-x a r") 'anything-recentf)
+      ;;(global-set-key (kbd "C-x a h b") 'anything-hatena-bookmark)
+      (global-set-key (kbd "C-x a b") 'anything-bookmarks)
+      (global-set-key (kbd "C-x a i") 'anything-imenu)
+
+      (setq anything-enable-shortcuts 'prefix)
+      (define-key anything-map (kbd "@") 'anything-select-with-prefix-shortcut)
+      (global-set-key (kbd "C-x b") 'anything-mini)
+      ))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; #helm
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1432,6 +1451,7 @@ properly disable mozc-mode."
               (lambda ()
                 (setq web-mode-markup-indent-offset 2)))
     ))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; #main
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1441,8 +1461,9 @@ properly disable mozc-mode."
 (my-simple-screen)
 (my-whitespace)
 (my-which-key)
-(my-e2wm)
+;;(my-e2wm)
 (my-helm)
+(my-anything)
 ;;(my-auto-complete)
 (my-company-mode)
 (my-ddskk)
