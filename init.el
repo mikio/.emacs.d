@@ -69,6 +69,7 @@
 ;; 使用パッケージ
 (defvar my-packages
   '(seq
+    evil
     edit-server
     ag
     wgrep-ag
@@ -77,18 +78,14 @@
     auto-complete
     company
     smartrep
+    color-moccur
     hydra
     ;;tabbar
     simple-screen
     ;; e2wm
     anything
-    ;; helm
-    ;; helm-c-moccur
-    ;; helm-c-yasnippet
-    ;; helm-git
+    helm
     ;; helm-gtags
-    ;; helm-ag
-    ;; helm-open-github
     twittering-mode
     org
     magit
@@ -97,13 +94,14 @@
     ac-slime
     lispxmp
     eldoc-extension
-    paredit
+    ;; paredit
     rainbow-delimiters
     clojure-mode
     queue
     cider
     ac-cider
     js2-mode
+    markdown-mode
     ;;gradle-mode
     groovy-mode
     meghanada ;; ide like mode for java
@@ -120,6 +118,11 @@
     ;; mozc-im
     ;; mozc-popup
     ddskk
+    evil-org
+    evil-leader
+    ;; evil-paredit
+    evil-magit
+    evil-lispy
     ))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; #package
@@ -593,7 +596,7 @@ properly disable mozc-mode."
     (setq default-input-method "japanese-skk")
     (setq skk-user-directory "~/.emacs.d/SKK") ;; 設定ファイル、個人辞書ファイルの置き場
     (setq skk-init-file "~/.emacs.d/SKK/init") ;; 設定ファイルの指定
-    
+   
     (add-hook 'isearch-mode-hook 'skk-isearch-mode-setup)
     (add-hook 'isearch-mode-end-hook 'skk-isearch-mode-cleanup)
 
@@ -692,7 +695,7 @@ properly disable mozc-mode."
     (global-set-key (kbd "M-+") 'e2wm:start-management)
     :config
 
-    (e2wm:add-keymap 
+    (e2wm:add-keymap
      e2wm:pst-minor-mode-keymap
      '(("<M-left>" . e2wm:dp-code )                 ; codeへ変更
        ("<M-right>"  . e2wm:dp-two)                 ; twoへ変更
@@ -705,8 +708,8 @@ properly disable mozc-mode."
        ("M-m"       . e2wm:pst-window-select-main-command) ; メインウインドウを選択する
        ) e2wm:prefix-key)
 
-    (e2wm:add-keymap 
-     e2wm:dp-doc-minor-mode-map 
+    (e2wm:add-keymap
+     e2wm:dp-doc-minor-mode-map
      '(("prefix I" . info))             ; infoを起動する
      e2wm:prefix-key)
 
@@ -739,29 +742,37 @@ properly disable mozc-mode."
 (defun my-anything ()
     (use-package anything-config
       :config
+      (setq anything-idle-delay 0.3)
+      (setq anything-input-idle-delay 0)
+
       (global-set-key (kbd "M-x") 'anything-M-x)
       (global-set-key (kbd "C-x b") 'anything-buffers-list)
+      ;;(global-set-key (kbd "C-x b") 'anything-mini)
       (global-set-key (kbd "C-x a r") 'anything-recentf)
       ;;(global-set-key (kbd "C-x a h b") 'anything-hatena-bookmark)
       (global-set-key (kbd "C-x a b") 'anything-bookmarks)
       (global-set-key (kbd "C-x a i") 'anything-imenu)
+     
 
       (setq anything-enable-shortcuts 'prefix)
       (define-key anything-map (kbd "@") 'anything-select-with-prefix-shortcut)
-      (global-set-key (kbd "C-x b") 'anything-mini)
+     
       ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; #helm
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;(require 'helm-config)
 (defun my-helm ()
-  (use-package helm
+  (use-package helm-config
     :bind (("M-y" . helm-show-kill-ring) ; 過去のkillリングの内容を表示する。
            )
-    :init
-    ;; nothing
-
+ 
+    ;; :init
+    ;; ;; nothing
+    ;; (message "helm-init")
     :config
+    (message "helm-config")
 
     ;;(helm-dired-bindings 1)
 
@@ -781,34 +792,33 @@ properly disable mozc-mode."
     (global-set-key (kbd "C-x a d") 'helm-for-document)
     (global-set-key (kbd "C-x a m") 'helm-man-woman)
     ;;(global-set-key (kbd "C-x C-f") 'helm-find-files)
-
     )
 
-  (use-package helm-gtags
-    :config
-    (add-hook 'c-mode-hook (lambda () (helm-gtags-mode)))
-    (add-hook 'java-mode-hook (lambda () (helm-gtags-mode)))
-    (add-hook 'jde-mode-hook (lambda () (helm-gtags-mode)))
+  ;; (use-package helm-gtags
+  ;;   :config
+  ;;   (add-hook 'c-mode-hook (lambda () (helm-gtags-mode)))
+  ;;   (add-hook 'java-mode-hook (lambda () (helm-gtags-mode)))
+  ;;   (add-hook 'jde-mode-hook (lambda () (helm-gtags-mode)))
 
-    ;; customize
-    (setq helm-c-gtags-path-style 'relative)
-    (setq helm-c-gtags-ignore-case t)
-    (setq helm-c-gtags-read-only nil)
+  ;;   ;; customize
+  ;;   (setq helm-c-gtags-path-style 'relative)
+  ;;   (setq helm-c-gtags-ignore-case t)
+  ;;   (setq helm-c-gtags-read-only nil)
 
-    ;; 関数の定義元へ移動
-    (local-set-key (kbd "C-c t j") 'helm-gtags-find-tag)
-    ;; 関数を参照元の一覧を表示．RET で参照元へジャンプできる
-    (local-set-key (kbd "C-c t r") 'helm-gtags-find-rtag)
-    ;; 変数の定義元と参照元の一覧を表示．RET で該当箇所へジャンプできる．
-    (local-set-key (kbd "C-c t s") 'helm-gtags-find-symbol)
-    ;; すべてのシンボルから選択する
-    (local-set-key (kbd "C-c t S") 'helm-gtags-select)
-    ;; すべてのシンボルから選択する
-    (local-set-key (kbd "C-c t p") 'helm-gtags-parse-file)
-    ;; 元にもどる
-    (local-set-key (kbd "C-c t b") 'helm-gtags-pop-stack)
-    )
+  ;;   ;; 関数の定義元へ移動
+  ;;   (local-set-key (kbd "C-c t j") 'helm-gtags-find-tag)
+  ;;   ;; 関数を参照元の一覧を表示．RET で参照元へジャンプできる
+  ;;   (local-set-key (kbd "C-c t r") 'helm-gtags-find-rtag)
+  ;;   ;; 変数の定義元と参照元の一覧を表示．RET で該当箇所へジャンプできる．
+  ;;   (local-set-key (kbd "C-c t s") 'helm-gtags-find-symbol)
+  ;;   ;; すべてのシンボルから選択する
+  ;;   (local-set-key (kbd "C-c t S") 'helm-gtags-select)
+  ;;   ;; すべてのシンボルから選択する
+  ;;   (local-set-key (kbd "C-c t p") 'helm-gtags-parse-file)
+  ;;   ;; 元にもどる
+  ;;   (local-set-key (kbd "C-c t b") 'helm-gtags-pop-stack))
   )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; #auto-complete
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1088,7 +1098,11 @@ properly disable mozc-mode."
                ("F" . twittering-favorite)
                ("R" . twittering-native-retweet)
                ("s" . twittering-search)
-               ("o" . twittering-toggle-or-retrieve-replied-statuses))
+               ("p" . twittering-goto-previous-status)
+               ("n" . twittering-goto-next-status)
+               ("o" . twittering-toggle-or-retrieve-replied-statuses)
+               ("t" . twittering-update-status-interactive)
+               )
 
     ;; サーバ証明書の認証を無効化する
     ;; http://d.hatena.ne.jp/wadakei/20120211/1328968663
@@ -1446,23 +1460,227 @@ properly disable mozc-mode."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun my-web-mode()
   (use-package web-mode
+    :mode (("\\.html?\\'" . web-mode)
+           ("\\.jsp\\'"   . web-mode)
+           ("\\.gsp\\'"   . web-mode))
     :config
     (add-hook 'web-mode-hook
               (lambda ()
                 (setq web-mode-markup-indent-offset 2)))
     ))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; #evil
+;; - evilの設定において下記は必読
+;;   http://d.hatena.ne.jp/tarao/20130304/evil_config
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun my-evil ()
+  (use-package evil
+    :config
+    (evil-mode 1)
+    (setq evil-esc-delay 0.001)
+
+    ;; oキーでインデントしない
+    (setq evil-auto-indent nil)
+
+    ;;
+    ;; key bind
+    ;;
+
+    ;; ex
+    ;; 1行編集キーバインドとしてマクロ化したい。
+    (define-key evil-ex-completion-map (kbd "C-a") 'move-beginning-of-line)
+    (define-key evil-ex-completion-map (kbd "C-e") 'move-end-of-line)
+    (define-key evil-ex-completion-map (kbd "C-e") 'move-end-of-line)
+    (define-key evil-ex-completion-map (kbd "C-b") 'backward-char)
+    (define-key evil-ex-completion-map (kbd "C-d") 'delete-char)
+    (define-key evil-ex-completion-map (kbd "C-k") 'kill-line)
+    (define-key evil-ex-completion-map (kbd "C-p") 'previous-history-element)
+    (define-key evil-ex-completion-map (kbd "C-n") 'next-history-element)
+
+    ;; search。。。効かない
+    ;; (define-key evil-ex-search-keymap (kbd "C-a") 'move-beginning-of-line)
+    ;; (define-key evil-ex-search-keymap (kbd "C-e") 'move-end-of-line)
+    ;; (define-key evil-ex-search-keymap (kbd "C-e") 'move-end-of-line)
+    ;; (define-key evil-ex-search-keymap (kbd "C-b") 'backward-char)
+    ;; (define-key evil-ex-search-keymap (kbd "C-d") 'delete-char)
+    ;; (define-key evil-ex-search-keymap (kbd "C-k") 'kill-line)
+    ;; (define-key evil-ex-search-keymap (kbd "C-p") 'previous-history-element)
+    ;; (define-key evil-ex-search-keymap (kbd "C-n") 'next-history-element)
+
+    ;; インサートステートでemacsとして足りないキーバインドを追加する。
+    (define-key evil-insert-state-map (kbd "C-e") 'move-end-of-line)
+    (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
+    (define-key evil-insert-state-map (kbd "M-C-h") 'backward-kill-word)
+    (define-key evil-insert-state-map (kbd "C-k") 'kill-line)
+    ;;(evil-set-toggle-key (kbd "C-c C-z"))
+
+    ;;-----------------------------------------------------------------
+    ;; 基本方針として、移動系のよく使用するコマンドとコピーコマンド以外は
+    ;; emacsのメジャーモードのキーバインドを優先させる。
+    ;;
+    ;;  [N] normalはノーマルステート
+    ;;  [I] insertは挿入ステート
+    ;;  [V] visualはビジュアルステート(範囲選択中のステート)
+    ;;  [O] operatorはオペレータ待機ステート(オペレータを入力してから後続のキーを入力するまでのステート)
+    ;;  [R] replaceは置換ステート(Rしたときのステート)
+    ;;  [M] motionは編集を伴わない状態を表すためのステートです
+    ;;  motionステートで定義されたキーはnormalやvisualでも使えます
+    ;;  normalで定義されたキーはvisualでも使えます.
+    ;;
+    ;; lookup-keyによるコマンドの上書きは、そのコマンドの定義してあるステートで記述しなければならない。
+    ;; https://bitbucket.org/lyro/evil/src/master/evil-maps.el
+    ;;
+    ;; evil-make-overriding-map
+    ;;   特定のメージャーモードのキーマップをevilより優先させる
+    ;; evil-add-hjkl-bindings
+    ;;   emacsを優先させつつも hjkl に限り優先させる
+    ;;
+    ;; 特定のメージャーモードをemacs互換に指定する
+    ;; (add-to-list 'evil-emacs-state-modes 'eshell-mode)
+    ;;-----------------------------------------------------------------
+    (defmacro my-evil-add-hjkl-bindings (mode-map state &rest bindings)
+      "hjklについてはvimコマンドを利用。
+あとは足りないコマンドを付けたしていく。"
+      (declare (indent defun))
+      `(progn (evil-make-overriding-map ,mode-map ,state)
+              (evil-add-hjkl-bindings ,mode-map ,state
+                ;; ノーマルステートで0押下時は、motions-steteの０コマンドを使用する。
+                "0" (lookup-key evil-motion-state-map "0")
+                "$" (lookup-key evil-motion-state-map "$")
+                "w" (lookup-key evil-motion-state-map "w")
+                "b" (lookup-key evil-motion-state-map "b")
+                "n" (lookup-key evil-motion-state-map "n")
+                "N" (lookup-key evil-motion-state-map "N")
+                "G" (lookup-key evil-motion-state-map "G")
+                "g" (lookup-key evil-motion-state-map "g")
+                "y" (lookup-key evil-normal-state-map "y")
+                "v" (lookup-key evil-motion-state-map "v")
+                "V" (lookup-key evil-motion-state-map "V")
+                "C-e" (lookup-key evil-normal-state-map "C-e")
+                ,@bindings
+                )))
+    )
+
+ 
+
+  (use-package evil-org)
+  (use-package evil-magit)
+  (use-package evil-lispy)
+  )
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; #evil-keybind
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun my-evil-keybind ()
+  (use-package evil
+    :config
+
+    (delq 'dired-mode evil-emacs-state-modes)
+    (progn
+      (my-evil-add-hjkl-bindings dired-mode-map 'normal
+        "C" (lookup-key dired-mode-map "C")
+        "j" (lookup-key dired-mode-map "n")
+        "k" (lookup-key dired-mode-map "p"))
+      (evil-declare-key 'normal dired-mode-map (kbd "C-c C-c") 'revert-buffer)
+      )
+    (use-package skk
+      :config
+      ;; ノーマルステート時に状態遷移した時に、skkが起動している場合、
+      ;; 自動的にアスキーモードにする。
+      (defun my-skk-control ()
+        (when skk-mode
+          (skk-latin-mode 1)))
+      (add-hook 'evil-normal-state-entry-hook 'my-skk-control))
+    (use-package  twittering-mode
+      :config
+      (delq 'twittering-mode evil-emacs-state-modes)
+      (my-evil-add-hjkl-bindings twittering-mode-map 'normal
+        "j" (lookup-key twittering-mode-map "j"))
+      (evil-declare-key 'normal twittering-mode-map (kbd "C-c v") 'twittering-other-user-timeline)
+      ;; "F"でお気に入り
+      ;; "R"でリツイートできるようにする
+      (evil-declare-key 'normal twittering-mode-map (kbd "F") 'twittering-favorite)
+      (evil-declare-key 'normal twittering-mode-map (kbd "R") 'twittering-native-retweet)
+      (evil-declare-key 'normal twittering-mode-map (kbd "s") 'twittering-search)
+      (evil-declare-key 'normal twittering-mode-map (kbd "p") 'twittering-switch-to-previous-timeline)
+      (evil-declare-key 'normal twittering-mode-map (kbd "n") 'twittering-switch-to-next-timeline)
+      (evil-declare-key 'normal twittering-mode-map (kbd "C-S-i") 'twittering-goto-previous-uri)
+      (evil-declare-key 'normal twittering-mode-map (kbd "C-i") 'twittering-goto-next-uri)
+      (evil-declare-key 'normal twittering-mode-map (kbd "G") 'my-twit-update-and-goto-last-line)
+      ;; (define-key twittering-mode-map (kbd "q") nil)
+      ;; (define-key twittering-mode-map (kbd "C-h") 'tabbar-backward-tab)
+      ;; (define-key twittering-mode-map (kbd "C-l") 'tabbar-forward-tab)
+      )
+    (use-package evil-leader
+      :config
+      (global-evil-leader-mode)
+      (evil-leader/set-leader ",")
+      (evil-leader/set-key
+        "," #'switch-to-last-buffer-or-other-window
+        "x" #'helm-M-x
+        "g" #'magit-status
+        "f" #'find-file
+        "r" #'helm-recentf
+        "b" #'helm-buffers-list
+        "ai" #'helm-imenu
+        "s" #'search-web-at-point
+
+        "tj" #'helm-gtags-find-tag      ; 関数の定義元へ移動
+        "tb" #'helm-gtags-pop-stack     ; 元にもどる
+        "tr" #'helm-gtags-find-rtag ; 関数を参照元の一覧を表示．RET で参照元へジャンプできる
+        "ts" #'helm-gtags-find-symbol   ;
+        "tS" #'helm-gtags-find-select   ; すべてのシンボルから選択する
+        "tp" #'helm-gtags-parse-file    ;
+
+        "0" #'simple-screen-0
+        "1" #'simple-screen-1
+        "2" #'simple-screen-2
+        "3" #'simple-screen-3
+        "4" #'simple-screen-4
+        "5" #'simple-screen-5
+        "6" #'simple-screen-6
+        "7" #'simple-screen-7
+        "8" #'simple-screen-8
+        "9" #'simple-screen-9
+        ))))
+;; あとで整理してevilキーバインドとして定義
+    ;; (global-set-key (kbd "M-x") 'helm-M-x)
+    ;; (global-set-key (kbd "C-x b") 'helm-buffers-list)
+    ;; (global-set-key (kbd "C-x a r") 'helm-recentf)
+    ;; ;; (global-set-key (kbd "C-x a h b") 'helm-hatena-bookmark)
+    ;; (global-set-key (kbd "C-x a b") 'helm-bookmarks)
+    ;; (global-set-key (kbd "C-x a i") 'helm-imenu)
+    ;; (global-set-key (kbd "C-x a g") 'helm-do-grep)
+    ;; ;;(global-set-key (kbd "C-x a g") 'helm-ack)
+    ;; (global-set-key (kbd "C-x a d") 'helm-for-document)
+    ;; (global-set-key (kbd "C-x a m") 'helm-man-woman)
+    ;; ;;(global-set-key (kbd "C-x C-f") 'helm-find-files)
+     
+    ;; ;; 関数の定義元へ移動
+    ;; (local-set-key (kbd "C-c t j") 'helm-gtags-find-tag)
+    ;; ;; 関数を参照元の一覧を表示．RET で参照元へジャンプできる
+    ;; (local-set-key (kbd "C-c t r") 'helm-gtags-find-rtag)
+    ;; ;; 変数の定義元と参照元の一覧を表示．RET で該当箇所へジャンプできる．
+    ;; (local-set-key (kbd "C-c t s") 'helm-gtags-find-symbol)
+    ;; ;; すべてのシンボルから選択する
+    ;; (local-set-key (kbd "C-c t S") 'helm-gtags-select)
+    ;; ;; すべてのシンボルから選択する
+    ;; (local-set-key (kbd "C-c t p") 'helm-gtags-parse-file)
+    ;; ;; 元にもどる
+    ;; (local-set-key (kbd "C-c t b") 'helm-gtags-pop-stack)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; #main
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(my-environment-init)
 (my-init)
+(my-evil)
 ;;(my-create-custom-file)
 (my-last-buffer)
 (my-simple-screen)
 (my-whitespace)
 (my-which-key)
 ;;(my-e2wm)
-(my-helm)
+;;(my-helm)
 (my-anything)
 ;;(my-auto-complete)
 (my-company-mode)
@@ -1485,5 +1703,4 @@ properly disable mozc-mode."
 ;;(my-groovy) ;; emacs25.1でエラーがでる。
 (my-golang)
 (my-web-mode)
-
-(my-environment-init)
+(my-evil-keybind)
